@@ -44,5 +44,10 @@ locals {
   app_pools = { for idx, name in local.cluster_app_node_pool_names :
     name => local.cluster_app_node_count[idx]
   }
+
+  #lb
+  public_ip_name            = "app-public-ip"
+  lb_name                   = "app-lb"
+  lb_frontend_configuration = "FrontEndIP"
   #cluster_availability_zone = [""] no zone is available for south india
 }

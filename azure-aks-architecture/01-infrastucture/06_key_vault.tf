@@ -31,7 +31,7 @@ locals {
   identity_output = jsondecode(data.local_file.identity_output.content)
 }
 
-resource "azurerm_key_vault_access_policy" "example" {
+resource "azurerm_key_vault_access_policy" "assign_identity_to_app_node_pool" {
   key_vault_id = azurerm_key_vault.app_keyvault.id
   tenant_id    = local.tenant_id
   object_id    = local.identity_output.userAssignedIdentities["/subscriptions/${local.subscription_id}/resourceGroups/MC_${azurerm_resource_group.azure_grp.name}_${local.cluster_name}_southindia/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${local.cluster_name}-${local.cluster_agent_pool_name}"].principalId
