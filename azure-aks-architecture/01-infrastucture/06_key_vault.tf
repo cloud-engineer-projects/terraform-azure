@@ -1,86 +1,47 @@
-# resource "azurerm_key_vault" "app_keyvault" {
-#   name                        = local.keyvault_name
-#   location                    = azurerm_resource_group.azure_grp.location
-#   resource_group_name         = azurerm_resource_group.azure_grp.name
-#   enabled_for_disk_encryption = local.keyvault_enabled_for_disk_encryption
-#   tenant_id                   = data.azurerm_client_config.current.tenant_id
-#   soft_delete_retention_days  = local.keyvault_soft_deletion_retention_days
-#   purge_protection_enabled    = local.keyvault_purge_protection_enabled
+resource "azurerm_key_vault" "app_keyvault" {
+  name                        = local.keyvault_name
+  location                    = azurerm_resource_group.azure_grp.location
+  resource_group_name         = azurerm_resource_group.azure_grp.name
+  enabled_for_disk_encryption = local.keyvault_enabled_for_disk_encryption
+  tenant_id                   = local.tenant_id
+  soft_delete_retention_days  = local.keyvault_soft_deletion_retention_days
+  purge_protection_enabled    = local.keyvault_purge_protection_enabled
 
-#   sku_name = local.keyvault_sku_name
+  sku_name = local.keyvault_sku_name
 
-#   access_policy {
-#     tenant_id = data.azurerm_client_config.current.tenant_id
-#     object_id = data.azurerm_client_config.current.object_id
+  depends_on = [azurerm_kubernetes_cluster_node_pool.app_node_pool]
+}
 
-#     #given all permission to current tenant user
-#     key_permissions = [
-#       "Backup",
-#       "Create",
-#       "Delete",
-#       "DeleteIssuers",
-#       "Get",
-#       "GetIssuers",
-#       "Import",
-#       "List",
-#       "ListIssuers",
-#       "ManageContacts",
-#       "ManageIssuers",
-#       "Purge",
-#       "Recover",
-#       "Restore",
-#       "Sign",
-#       "UnwrapKey",
-#       "Update",
-#       "Verify",
-#       "WrapKey",
-#     ]
+resource "null_resource" "assign_identity" {
+  provisioner "local-exec" {
+    command = <<EOT
+      powershell -File ./scripts/assign_identity.ps1 -RESOURCE_GROUP "MC_${azurerm_resource_group.azure_grp.name}_${local.cluster_name}_southindia" -CLUSTER_NAME "${local.cluster_name}" -NODE_POOL_NAME "${local.cluster_app_node_pool_names[0]}" > ./scripts/identity_output.json
+    EOT
+  }
 
-#     secret_permissions = [
-#       "Backup",
-#       "Delete",
-#       "Get",
-#       "List",
-#       "Purge",
-#       "Recover",
-#       "Restore",
-#       "Set",
-#     ]
+  depends_on = [azurerm_kubernetes_cluster_node_pool.app_node_pool]
+}
 
-#     certificate_permissions = [
-#       "Create",
-#       "Delete",
-#       "DeleteIssuers",
-#       "Get",
-#       "GetIssuers",
-#       "Import",
-#       "List",
-#       "ListIssuers",
-#       "ManageContacts",
-#       "ManageIssuers",
-#       "Purge",
-#       "Recover",
-#       "SetIssuers",
-#       "Update",
-#     ]
+data "local_file" "identity_output" {
+  filename   = "./scripts/identity_output.json"
+  depends_on = [null_resource.assign_identity]
+}
 
-#     storage_permissions = [
-#       "Backup",
-#       "Delete",
-#       "DeleteSas",
-#       "Get",
-#       "GetSas",
-#       "List",
-#       "ListSas",
-#       "Purge",
-#       "Recover",
-#       "RegenerateKey",
-#       "Restore",
-#       "Set",
-#       "SetSas",
-#       "Update",
-#     ]
-#   }
+locals {
+  identity_output = jsondecode(data.local_file.identity_output.content)
+}
 
-#   depends_on = [azurerm_kubernetes_cluster_node_pool.app_node_pool]
-# }
+resource "azurerm_key_vault_access_policy" "example" {
+  key_vault_id = azurerm_key_vault.app_keyvault.id
+  tenant_id    = local.tenant_id
+  object_id    = local.identity_output.userAssignedIdentities["/subscriptions/${local.subscription_id}/resourceGroups/MC_${azurerm_resource_group.azure_grp.name}_${local.cluster_name}_southindia/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${local.cluster_name}-${local.cluster_agent_pool_name}"].principalId
+
+  key_permissions = [
+    "Get",
+  ]
+
+  secret_permissions = [
+    "Get", "Set",
+  ]
+}
+

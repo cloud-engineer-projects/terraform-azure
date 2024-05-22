@@ -12,16 +12,3 @@ resource "azurerm_kubernetes_cluster_node_pool" "app_node_pool" {
 
   depends_on = [azurerm_kubernetes_cluster.app_aks]
 }
-
-resource "null_resource" "cluster_4" {
-  provisioner "local-exec" {
-    command = "powershell -File ./scripts/enable_identity.ps1"
-    environment = {
-      RESOURCE_GROUP = "MC_${azurerm_resource_group.azure_grp.name}_${local.cluster_name}_southindia"
-      CLUSTER_NAME   = local.cluster_name
-      NODE_POOL_NAME = "apppool" # Change this to your specific node pool name
-    }
-  }
-
-  depends_on = [azurerm_kubernetes_cluster_node_pool.app_node_pool]
-}

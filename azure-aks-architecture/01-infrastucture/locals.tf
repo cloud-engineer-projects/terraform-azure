@@ -2,6 +2,8 @@ locals {
   #resource_grp
   resource_grp_name     = "app-grp"
   resource_grp_location = "South India"
+  tenant_id             = "6e804f24-0209-4dcd-ac89-97525eddbd30"
+  subscription_id       = "d7317d85-a58f-4e68-9b4e-b53b855a72fa"
 
   #virtual_network
   vnet_name             = "app-vnet"
@@ -33,7 +35,7 @@ locals {
   cluster_app_node_count      = [1]
 
   #app-keyvault
-  keyvault_name                         = "app-keyvault"
+  keyvault_name                         = "app-keyvault-t21as"
   keyvault_sku_name                     = "standard"
   keyvault_purge_protection_enabled     = false
   keyvault_soft_deletion_retention_days = 7

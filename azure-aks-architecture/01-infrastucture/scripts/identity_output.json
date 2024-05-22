@@ -1,0 +1,9 @@
+{
+  "systemAssignedIdentity": "ef09dba2-7034-4601-bc94-b414c2f7aee8",
+  "userAssignedIdentities": {
+    "/subscriptions/d7317d85-a58f-4e68-9b4e-b53b855a72fa/resourceGroups/MC_app-grp_app-aks_southindia/providers/Microsoft.ManagedIdentity/userAssignedIdentities/app-aks-agentpool": {
+      "clientId": "e8111f81-5eb7-42e6-9213-10a3d241569c",
+      "principalId": "19a4f120-4b28-4547-838d-8a435edb9948"
+    }
+  }
+}
